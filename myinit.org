@@ -1,30 +1,158 @@
-(use-package org-pdfview
-:ensure t)
-
-(require 'pdf-tools)
-(require 'org-pdfview)
-
-#+END_SRC
-* auto-yasnippet
+#+STARTUP: overview
+* repos
 #+BEGIN_SRC emacs-lisp
-(use-package auto-yasnippet
-:ensure t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+
 #+END_SRC
-* mu4e-conversation
+* interface tweaks
 #+BEGIN_SRC emacs-lisp
-(use-package mu4e-conversation
-:ensure t
-)
-
+(setq inhibit-startup-message t)
+(tool-bar-mode -1)
+(fset 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "<f5>") 'revert-buffer)
 #+END_SRC
-* Misc
+
+* try
 #+BEGIN_SRC emacs-lisp
-(setq browse-url-browser-function 'browse-url-generic
-      browse-url-generic-program "google-chrome-stable")
-
-(setq auto-window-vscroll nil)
-
+(use-package try
+	:ensure t)
 #+END_SRC
+
+* which key
+  Brings up some help
+  #+BEGIN_SRC emacs-lisp
+  (use-package which-key
+	:ensure t 
+	:config
+	(which-key-mode))
+  #+END_SRC
+
+* Org mode
+
+
+  Org bullets makes things look pretty
+  #+BEGIN_SRC emacs-lisp
+
+  (use-package org 
+  :ensure t
+  :pin org)
+
+    (setenv "BROWSER" "google-chrome-stable")
+
+        (use-package org-bullets
+        :ensure t
+        :config
+        (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+            (custom-set-variables
+             '(org-directory "~/Dropbox/orgfiles")
+             '(org-default-notes-file (concat org-directory "/notes.org"))
+             '(org-export-html-postamble nil)
+             '(org-hide-leading-stars t)
+             '(org-startup-folded (quote overview))
+             '(org-startup-indented t)
+             )
+
+            (setq org-file-apps
+  		(append '(
+          		  ("\\.pdf\\'" . "evince %s")
+          		  ) org-file-apps ))
+
+            (global-set-key "\C-ca" 'org-agenda)
+
+            (setq org-agenda-custom-commands
+            '(("c" "Simple agenda view"
+            ((agenda "")
+            (alltodo "")))))
+
+            (global-set-key (kbd "C-c c") 'org-capture)
+
+            (setq org-agenda-files (list "~/Dropbox/orgfiles/gcal.org"
+          			       "~/Dropbox/orgfiles/i.org"
+          			       "~/Dropbox/orgfiles/schedule.org"))
+            (setq org-capture-templates
+          			  '(("a" "Appointment" entry (file  "~/Dropbox/orgfiles/gcal.org" )
+          				   "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+          				  ("l" "Link" entry (file+headline "~/Dropbox/orgfiles/links.org" "Links")
+          				   "* %? %^L %^g \n%T" :prepend t)
+          				  ("b" "Blog idea" entry (file+headline "~/Dropbox/orgfiles/i.org" "Blog Topics:")
+          				   "* %?\n%T" :prepend t)
+          				  ("t" "To Do Item" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+          				   "* TODO %?\n%u" :prepend t)
+  					  ("m" "Mail To Do" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+  					   "* TODO %a\n %?" :prepend t)
+  					  ("g" "GMail To Do" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+  					   "* TODO %^L\n %?" :prepend t)
+  					  ("n" "Note" entry (file+headline "~/Dropbox/orgfiles/i.org" "Note space")
+          				   "* %?\n%u" :prepend t)
+  					  ))
+            ;; (setq org-capture-templates
+        ;; 		    '(("a" "Appointment" entry (file  "~/Dropbox/orgfiles/gcal.org" )
+        ;; 			     "* TODO %?\n:PROPERTIES:\nDEADLINE: %^T \n\n:END:\n %i\n")
+        ;; 			    ("l" "Link" entry (file+headline "~/Dropbox/orgfiles/links.org" "Links")
+        ;; 			     "* %? %^L %^g \n%T" :prepend t)
+        ;; 			    ("b" "Blog idea" entry (file+headline "~/Dropbox/orgfiles/i.org" "Blog Topics:")
+        ;; 			     "* %?\n%T" :prepend t)
+        ;; 			    ("t" "To Do Item" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+        ;; 			     "* TODO %?\n%u" :prepend t)
+        ;; 			    ("n" "Note" entry (file+headline "~/Dropbox/orgfiles/i.org" "Note space")
+        ;; 			     "* %?\n%u" :prepend t)
+
+        ;; 			    ("j" "Journal" entry (file+datetree "~/Dropbox/journal.org")
+        ;; 			     "* %?\nEntered on %U\n  %i\n  %a")
+            ;;                                ("s" "Screencast" entry (file "~/Dropbox/orgfiles/screencastnotes.org")
+            ;;                                "* %?\n%i\n")))
+
+
+        (defadvice org-capture-finalize 
+            (after delete-capture-frame activate)  
+        "Advise capture-finalize to close the frame"  
+        (if (equal "capture" (frame-parameter nil 'name))  
+        (delete-frame)))
+
+        (defadvice org-capture-destroy 
+            (after delete-capture-frame activate)  
+        "Advise capture-destroy to close the frame"  
+        (if (equal "capture" (frame-parameter nil 'name))  
+        (delete-frame)))  
+
+        (use-package noflet
+        :ensure t )
+        (defun make-capture-frame ()
+        "Create a new frame and run org-capture."
+        (interactive)
+        (make-frame '((name . "capture")))
+        (select-frame-by-name "capture")
+        (delete-other-windows)
+        (noflet ((switch-to-buffer-other-window (buf) (switch-to-buffer buf)))
+            (org-capture)))
+
+(require 'ox-beamer)
+; for inserting inactive dates
+(define-key org-mode-map (kbd "C-c >") (lambda () (interactive (org-time-stamp-inactive))))
+
+
+  #+END_SRC
+
+  #+RESULTS:
+  : make-capture-frame
+
+* Ace windows for easy window switching
+  #+BEGIN_SRC emacs-lisp
+  (use-package ace-window
+  :ensure t
+  :init
+  (progn
+  (setq aw-scope 'frame)
+  (global-set-key (kbd "C-x O") 'other-frame)
+    (global-set-key [remap other-window] 'ace-window)
+    (custom-set-faces
+     '(aw-leading-char-face
+       ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
+    ))
+  #+END_SRC
+
+  #+RESULTS:
 
 * Swiper / Ivy / Counsel
   Swiper gives us a really efficient incremental search with regular expressions
@@ -1083,33 +1211,32 @@ Eshell prompt
           ("M-0"       . treemacs-select-window)
           ("C-c 1"     . treemacs-delete-other-windows)
         ))
-  (use-package treemacs-projectile
-    :defer t
-    :ensure t
-    :config
-    (setq treemacs-header-function #'treemacs-projectile-create-header)
-)
-
+ ;; (use-package treemacs-projectile
+ ;;   :defer t
+ ;;   :ensure t
+ ;;   :config
+ ;;   (setq treemacs-header-function #'treemacs-projectile-create-header))
+  
 #+END_SRC
-
+  
 #+RESULTS:
-
+  
 * misc
 #+BEGIN_SRC emacs-lisp
 (defun z/nikola-deploy () ""
 (interactive)
 (venv-with-virtualenv "blog" (shell-command "cd ~/gh/cestlaz.github.io; nikola github_deploy"))
-)
-
+) 
+  
 (defun z/swap-windows ()
 ""
 (interactive)
 (ace-swap-window)
 (aw-flip-window)
-)
-
+) 
+  
 #+END_SRC
-
+  
 #+RESULTS:
 : z/nikola-deploy
 * Haskell 
@@ -1120,9 +1247,9 @@ Eshell prompt
 (require 'haskell-interactive-mode)
 (require 'haskell-process)
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-
-)
-
+  
+) 
+  
 #+END_SRC
 * personal keymap
 #+BEGIN_SRC emacs-lisp
@@ -1131,14 +1258,14 @@ Eshell prompt
 ;  (global-unset-key (kbd (format "C-%d" n)))
 ;  (global-unset-key (kbd (format "M-%d" n)))
 ;  )
-
-
+  
+  
 (defun org-agenda-show-agenda-and-todo (&optional arg)
   (interactive "P")
   (org-agenda arg "c")
   (org-agenda-fortnight-view))
-
-
+  
+  
 ;; set up my own map
 (define-prefix-command 'z-map)
 (global-set-key (kbd "C-z") 'z-map) ;; was C-1
@@ -1147,36 +1274,36 @@ Eshell prompt
 (define-key z-map (kbd "1") 'org-global-cycle)
 (define-key z-map (kbd "a") 'org-agenda-show-agenda-and-todo)
 (define-key z-map (kbd "g") 'counsel-ag)
-
+  
 (define-key z-map (kbd "s") 'flyspell-correct-word-before-point)
 (define-key z-map (kbd "i") (lambda () (interactive) (find-file "~/Dropbox/orgfiles/i.org")))
 (define-key z-map (kbd "f") 'origami-toggle-node)
 (define-key z-map (kbd "w") 'z/swap-windows)
-
-
+  
+  
   (setq user-full-name "Mike Zamansky"
                           user-mail-address "mz631@hunter.cuny.edu")
   ;;--------------------------------------------------------------------------
-
-
+  
+  
   (global-set-key (kbd "\e\ei")
                   (lambda () (interactive) (find-file "~/Dropbox/orgfiles/i.org")))
-
+  
   (global-set-key (kbd "\e\el")
                   (lambda () (interactive) (find-file "~/Dropbox/orgfiles/links.org")))
-
+  
   (global-set-key (kbd "\e\ec")
                   (lambda () (interactive) (find-file "~/.emacs.d/myinit.org")))
-
+  
 (global-set-key (kbd "<end>") 'move-end-of-line)
-
+  
 (global-set-key [mouse-3] 'flyspell-correct-word-before-point)
-
+  
 #+END_SRC
-
+  
 #+RESULTS:
 : origami-toggle-node
-
+  
 #  LocalWords:  DIRED Javascript Screencasts Autocomplete
 * shell-pop 
 #+BEGIN_SRC emacs-lisp
@@ -1188,26 +1315,26 @@ Eshell prompt
   (setq shell-pop-term-shell "eshell")
   ;; need to do this manually or not picked up by `shell-pop'
   (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
-
-
+  
+  
 #+END_SRC
 * Wgrep
 #+BEGIN_SRC emacs-lisp
 (use-package wgrep
 :ensure t
-)
+) 
 (use-package wgrep-ag
 :ensure t
-)
+) 
 (require 'wgrep-ag)
 #+END_SRC
-
+  
 #+RESULTS:
 * Silversearcher
 #+BEGIN_SRC emacs-lisp
 (use-package ag
 :ensure t)
-
+  
 #+END_SRC
 * Regex
 #+BEGIN_SRC emacs-lisp
@@ -1215,7 +1342,7 @@ Eshell prompt
 :ensure t
 :config 
 (pcre-mode)
-)
+) 
 #+END_SRC
 * Music
 #+BEGIN_SRC emacs-lisp
@@ -1223,7 +1350,7 @@ Eshell prompt
 :ensure t)
 (use-package mingus
 :ensure t)
-
+  
 #+END_SRC
 * Atomic Chrome (edit in emacs)
 #+BEGIN_SRC emacs-lisp
@@ -1238,10 +1365,10 @@ Eshell prompt
 :ensure t)
 (use-package org-pdfview
 :ensure t)
-
+  
 (require 'pdf-tools)
 (require 'org-pdfview)
-
+  
 #+END_SRC
 * auto-yasnippet
 #+BEGIN_SRC emacs-lisp
@@ -1250,8 +1377,8 @@ Eshell prompt
 #+END_SRC
 * mu4e-conversation
 #+BEGIN_SRC emacs-lisp
-(use-package mu4e-conversation
-:ensure t
+;;(use-package mu4e-conversation
+;;:ensure t
 )
 
 #+END_SRC

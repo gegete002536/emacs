@@ -1,15 +1,127 @@
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
 
-(use-package auto-yasnippet
-:ensure t)
+(setq inhibit-startup-message t)
+(tool-bar-mode -1)
+(fset 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "<f5>") 'revert-buffer)
 
-(use-package mu4e-conversation
+(use-package try
+	:ensure t)
+
+(use-package which-key
+      :ensure t 
+      :config
+      (which-key-mode))
+
+(use-package org 
+  :ensure t
+  :pin org)
+
+    (setenv "BROWSER" "google-chrome-stable")
+
+        (use-package org-bullets
+        :ensure t
+        :config
+        (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+            (custom-set-variables
+             '(org-directory "~/Dropbox/orgfiles")
+             '(org-default-notes-file (concat org-directory "/notes.org"))
+             '(org-export-html-postamble nil)
+             '(org-hide-leading-stars t)
+             '(org-startup-folded (quote overview))
+             '(org-startup-indented t)
+             )
+
+            (setq org-file-apps
+  		(append '(
+          		  ("\\.pdf\\'" . "evince %s")
+          		  ) org-file-apps ))
+
+            (global-set-key "\C-ca" 'org-agenda)
+
+            (setq org-agenda-custom-commands
+            '(("c" "Simple agenda view"
+            ((agenda "")
+            (alltodo "")))))
+
+            (global-set-key (kbd "C-c c") 'org-capture)
+
+            (setq org-agenda-files (list "~/Dropbox/orgfiles/gcal.org"
+          			       "~/Dropbox/orgfiles/i.org"
+          			       "~/Dropbox/orgfiles/schedule.org"))
+            (setq org-capture-templates
+          			  '(("a" "Appointment" entry (file  "~/Dropbox/orgfiles/gcal.org" )
+          				   "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
+          				  ("l" "Link" entry (file+headline "~/Dropbox/orgfiles/links.org" "Links")
+          				   "* %? %^L %^g \n%T" :prepend t)
+          				  ("b" "Blog idea" entry (file+headline "~/Dropbox/orgfiles/i.org" "Blog Topics:")
+          				   "* %?\n%T" :prepend t)
+          				  ("t" "To Do Item" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+          				   "* TODO %?\n%u" :prepend t)
+  					  ("m" "Mail To Do" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+  					   "* TODO %a\n %?" :prepend t)
+  					  ("g" "GMail To Do" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+  					   "* TODO %^L\n %?" :prepend t)
+  					  ("n" "Note" entry (file+headline "~/Dropbox/orgfiles/i.org" "Note space")
+          				   "* %?\n%u" :prepend t)
+  					  ))
+            ;; (setq org-capture-templates
+        ;; 		    '(("a" "Appointment" entry (file  "~/Dropbox/orgfiles/gcal.org" )
+        ;; 			     "* TODO %?\n:PROPERTIES:\nDEADLINE: %^T \n\n:END:\n %i\n")
+        ;; 			    ("l" "Link" entry (file+headline "~/Dropbox/orgfiles/links.org" "Links")
+        ;; 			     "* %? %^L %^g \n%T" :prepend t)
+        ;; 			    ("b" "Blog idea" entry (file+headline "~/Dropbox/orgfiles/i.org" "Blog Topics:")
+        ;; 			     "* %?\n%T" :prepend t)
+        ;; 			    ("t" "To Do Item" entry (file+headline "~/Dropbox/orgfiles/i.org" "To Do")
+        ;; 			     "* TODO %?\n%u" :prepend t)
+        ;; 			    ("n" "Note" entry (file+headline "~/Dropbox/orgfiles/i.org" "Note space")
+        ;; 			     "* %?\n%u" :prepend t)
+
+        ;; 			    ("j" "Journal" entry (file+datetree "~/Dropbox/journal.org")
+        ;; 			     "* %?\nEntered on %U\n  %i\n  %a")
+            ;;                                ("s" "Screencast" entry (file "~/Dropbox/orgfiles/screencastnotes.org")
+            ;;                                "* %?\n%i\n")))
+
+
+        (defadvice org-capture-finalize 
+            (after delete-capture-frame activate)  
+        "Advise capture-finalize to close the frame"  
+        (if (equal "capture" (frame-parameter nil 'name))  
+        (delete-frame)))
+
+        (defadvice org-capture-destroy 
+            (after delete-capture-frame activate)  
+        "Advise capture-destroy to close the frame"  
+        (if (equal "capture" (frame-parameter nil 'name))  
+        (delete-frame)))  
+
+        (use-package noflet
+        :ensure t )
+        (defun make-capture-frame ()
+        "Create a new frame and run org-capture."
+        (interactive)
+        (make-frame '((name . "capture")))
+        (select-frame-by-name "capture")
+        (delete-other-windows)
+        (noflet ((switch-to-buffer-other-window (buf) (switch-to-buffer buf)))
+            (org-capture)))
+
+(require 'ox-beamer)
+; for inserting inactive dates
+(define-key org-mode-map (kbd "C-c >") (lambda () (interactive (org-time-stamp-inactive))))
+
+(use-package ace-window
 :ensure t
-)
-
-(setq browse-url-browser-function 'browse-url-generic
-      browse-url-generic-program "google-chrome-stable")
-
-(setq auto-window-vscroll nil)
+:init
+(progn
+(setq aw-scope 'frame)
+(global-set-key (kbd "C-x O") 'other-frame)
+  (global-set-key [remap other-window] 'ace-window)
+  (custom-set-faces
+   '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
+  ))
 
 (use-package counsel
 :ensure t
@@ -35,10 +147,10 @@
   (use-package swiper
   :ensure t
   :bind (("C-s" . swiper)
-         ("C-r" . swiper)
-         ("C-c C-r" . ivy-resume)
-         ("M-x" . counsel-M-x)
-         ("C-x C-f" . counsel-find-file))
+	 ("C-r" . swiper)
+	 ("C-c C-r" . ivy-resume)
+	 ("M-x" . counsel-M-x)
+	 ("C-x C-f" . counsel-find-file))
   :config
   (progn
     (ivy-mode 1)
@@ -102,7 +214,7 @@
 
 (use-package color-theme-modern
   :ensure t)
-    
+
 ;(use-package zenburn-theme
 ;  :ensure t
 ;  :config (load-theme 'zenburn t))
@@ -145,7 +257,7 @@
 
 (setq py-python-command "python3")
 (setq python-shell-interpreter "python3")
- 
+
 
     (use-package elpy
     :ensure t
@@ -243,13 +355,13 @@ narrowed."
 (use-package web-mode
     :ensure t
     :config
-         (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-         (add-to-list 'auto-mode-alist '("\\.vue?\\'" . web-mode))
-         (setq web-mode-engines-alist
-               '(("django"    . "\\.html\\'")))
-         (setq web-mode-ac-sources-alist
-         '(("css" . (ac-source-css-property))
-         ("vue" . (ac-source-words-in-buffer ac-source-abbrev))
+	 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+	 (add-to-list 'auto-mode-alist '("\\.vue?\\'" . web-mode))
+	 (setq web-mode-engines-alist
+	       '(("django"    . "\\.html\\'")))
+	 (setq web-mode-ac-sources-alist
+	 '(("css" . (ac-source-css-property))
+	 ("vue" . (ac-source-words-in-buffer ac-source-abbrev))
          ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
 (setq web-mode-enable-auto-closing t))
 (setq web-mode-enable-auto-quoting t) ; this fixes the quote problem I mentioned
@@ -449,21 +561,21 @@ narrowed."
     :init 
     (global-set-key
     (kbd "C-x t")
-            (defhydra toggle (:color blue)
-              "toggle"
-              ("a" abbrev-mode "abbrev")
-              ("s" flyspell-mode "flyspell")
-              ("d" toggle-debug-on-error "debug")
-              ("c" fci-mode "fCi")
-              ("f" auto-fill-mode "fill")
-              ("t" toggle-truncate-lines "truncate")
-              ("w" whitespace-mode "whitespace")
-              ("q" nil "cancel")))
+	    (defhydra toggle (:color blue)
+	      "toggle"
+	      ("a" abbrev-mode "abbrev")
+	      ("s" flyspell-mode "flyspell")
+	      ("d" toggle-debug-on-error "debug")
+	      ("c" fci-mode "fCi")
+	      ("f" auto-fill-mode "fill")
+	      ("t" toggle-truncate-lines "truncate")
+	      ("w" whitespace-mode "whitespace")
+	      ("q" nil "cancel")))
     (global-set-key
      (kbd "C-x j")
      (defhydra gotoline 
        ( :pre (linum-mode 1)
-              :post (linum-mode -1))
+	      :post (linum-mode -1))
        "goto"
        ("t" (lambda () (interactive)(move-to-window-line-top-bottom 0)) "top")
        ("b" (lambda () (interactive)(move-to-window-line-top-bottom -1)) "bottom")
@@ -486,7 +598,7 @@ narrowed."
        ("o" org-clock-out "Clock-Out") ; you might also want (setq org-log-note-clock-out t)
        ("j" org-clock-goto "Clock Goto") ; global visit the clocked task
        ("c" org-capture "Capture") ; Don't forget to define the captures you want http://orgmode.org/manual/Capture.html
-             ("l" (or )rg-capture-goto-last-stored "Last Capture"))
+	     ("l" (or )rg-capture-goto-last-stored "Last Capture"))
 
      ))
 
@@ -578,15 +690,15 @@ Git gutter:
     :config 
     (setq shell-switcher-mode t)
     :bind (("C-'" . shell-switcher-switch-buffer)
-           ("C-x 4 '" . shell-switcher-switch-buffer-other-window)
-           ("C-M-'" . shell-switcher-new-shell)))
+	   ("C-x 4 '" . shell-switcher-switch-buffer-other-window)
+	   ("C-M-'" . shell-switcher-new-shell)))
 
 
   ;; Visual commands
   (setq eshell-visual-commands '("vi" "screen" "top" "less" "more" "lynx"
-                                 "ncftp" "pine" "tin" "trn" "elm" "vim"
-                                 "nmtui" "alsamixer" "htop" "el" "elinks"
-                                 ))
+				 "ncftp" "pine" "tin" "trn" "elm" "vim"
+				 "nmtui" "alsamixer" "htop" "el" "elinks"
+				 ))
                                  (setq eshell-visual-subcommands '(("git" "log" "diff" "show")))
   (setq eshell-list-files-after-cd t)
   (defun eshell-clear-buffer ()
@@ -596,8 +708,8 @@ Git gutter:
       (erase-buffer)
       (eshell-send-input)))
   (add-hook 'eshell-mode-hook
-            '(lambda()
-               (local-set-key (kbd "C-l") 'eshell-clear-buffer)))
+	    '(lambda()
+	       (local-set-key (kbd "C-l") 'eshell-clear-buffer)))
 
   (defun eshell/magit ()
     "Function to open magit-status for the current directory"
@@ -707,30 +819,30 @@ directory to make multiple eshell windows easier."
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (setq ibuffer-saved-filter-groups
       (quote (("default"
-               ("dired" (mode . dired-mode))
-               ("org" (name . "^.*org$"))
-             ("IRC" (or (mode . circe-channel-mode) (mode . circe-server-mode)))
-               ("web" (or (mode . web-mode) (mode . js2-mode)))
-               ("shell" (or (mode . eshell-mode) (mode . shell-mode)))
-               ("mu4e" (or
+	       ("dired" (mode . dired-mode))
+	       ("org" (name . "^.*org$"))
+	     ("IRC" (or (mode . circe-channel-mode) (mode . circe-server-mode)))
+	       ("web" (or (mode . web-mode) (mode . js2-mode)))
+	       ("shell" (or (mode . eshell-mode) (mode . shell-mode)))
+	       ("mu4e" (or
 
                (mode . mu4e-compose-mode)
                (name . "\*mu4e\*")
                ))
-               ("programming" (or
-                               (mode . python-mode)
-                               (mode . c++-mode)))
-               ("emacs" (or
-                         (name . "^\\*scratch\\*$")
-                         (name . "^\\*Messages\\*$")))
-               ))))
+	       ("programming" (or
+			       (mode . python-mode)
+			       (mode . c++-mode)))
+	       ("emacs" (or
+			 (name . "^\\*scratch\\*$")
+			 (name . "^\\*Messages\\*$")))
+	       ))))
 (add-hook 'ibuffer-mode-hook
-          (lambda ()
-            (ibuffer-auto-mode 1)
-            (ibuffer-switch-to-saved-filter-groups "default")))
+	  (lambda ()
+	    (ibuffer-auto-mode 1)
+	    (ibuffer-switch-to-saved-filter-groups "default")))
 
 ;; don't show these
-                                        ;(add-to-list 'ibuffer-never-show-predicates "zowie")
+					;(add-to-list 'ibuffer-never-show-predicates "zowie")
 ;; Don't show filter groups if there are no buffers in that group
 (setq ibuffer-show-empty-filter-groups nil)
 
@@ -744,46 +856,45 @@ directory to make multiple eshell windows easier."
 )
 
 (use-package treemacs
-    :ensure t
-    :defer t
-    :config
-    (progn
+   :ensure t
+   :defer t
+   :config
+   (progn
 
-      (setq treemacs-follow-after-init          t
-            treemacs-width                      35
-            treemacs-indentation                2
-            treemacs-git-integration            t
-            treemacs-collapse-dirs              3
-            treemacs-silent-refresh             nil
-            treemacs-change-root-without-asking nil
-            treemacs-sorting                    'alphabetic-desc
-            treemacs-show-hidden-files          t
-            treemacs-never-persist              nil
-            treemacs-is-never-other-window      nil
-            treemacs-goto-tag-strategy          'refetch-index)
+     (setq treemacs-follow-after-init          t
+           treemacs-width                      35
+           treemacs-indentation                2
+           treemacs-git-integration            t
+           treemacs-collapse-dirs              3
+           treemacs-silent-refresh             nil
+           treemacs-change-root-without-asking nil
+           treemacs-sorting                    'alphabetic-desc
+           treemacs-show-hidden-files          t
+           treemacs-never-persist              nil
+           treemacs-is-never-other-window      nil
+           treemacs-goto-tag-strategy          'refetch-index)
 
-      (treemacs-follow-mode t)
-      (treemacs-filewatch-mode t))
-    :bind
-    (:map global-map
-          ([f8]        . treemacs-toggle)
-          ([f9]        . treemacs-projectile-toggle)
-          ("<C-M-tab>" . treemacs-toggle)
-          ("M-0"       . treemacs-select-window)
-          ("C-c 1"     . treemacs-delete-other-windows)
-        ))
-  (use-package treemacs-projectile
-    :defer t
-    :ensure t
-    :config
-    (setq treemacs-header-function #'treemacs-projectile-create-header)
-)
+     (treemacs-follow-mode t)
+     (treemacs-filewatch-mode t))
+   :bind
+   (:map global-map
+         ([f8]        . treemacs-toggle)
+         ([f9]        . treemacs-projectile-toggle)
+         ("<C-M-tab>" . treemacs-toggle)
+         ("M-0"       . treemacs-select-window)
+         ("C-c 1"     . treemacs-delete-other-windows)
+       ))
+;; (use-package treemacs-projectile
+;;   :defer t
+;;   :ensure t
+;;   :config
+;;   (setq treemacs-header-function #'treemacs-projectile-create-header))
 
 (defun z/nikola-deploy () ""
 (interactive)
 (venv-with-virtualenv "blog" (shell-command "cd ~/gh/cestlaz.github.io; nikola github_deploy"))
-)
-
+) 
+  
 (defun z/swap-windows ()
 ""
 (interactive)
@@ -797,7 +908,7 @@ directory to make multiple eshell windows easier."
 (require 'haskell-interactive-mode)
 (require 'haskell-process)
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-
+  
 )
 
 ;; unset C- and M- digit keys
@@ -805,14 +916,14 @@ directory to make multiple eshell windows easier."
 ;  (global-unset-key (kbd (format "C-%d" n)))
 ;  (global-unset-key (kbd (format "M-%d" n)))
 ;  )
-
-
+  
+  
 (defun org-agenda-show-agenda-and-todo (&optional arg)
   (interactive "P")
   (org-agenda arg "c")
   (org-agenda-fortnight-view))
-
-
+  
+  
 ;; set up my own map
 (define-prefix-command 'z-map)
 (global-set-key (kbd "C-z") 'z-map) ;; was C-1
@@ -821,29 +932,29 @@ directory to make multiple eshell windows easier."
 (define-key z-map (kbd "1") 'org-global-cycle)
 (define-key z-map (kbd "a") 'org-agenda-show-agenda-and-todo)
 (define-key z-map (kbd "g") 'counsel-ag)
-
+  
 (define-key z-map (kbd "s") 'flyspell-correct-word-before-point)
 (define-key z-map (kbd "i") (lambda () (interactive) (find-file "~/Dropbox/orgfiles/i.org")))
 (define-key z-map (kbd "f") 'origami-toggle-node)
 (define-key z-map (kbd "w") 'z/swap-windows)
-
-
+  
+  
   (setq user-full-name "Mike Zamansky"
                           user-mail-address "mz631@hunter.cuny.edu")
   ;;--------------------------------------------------------------------------
-
-
+  
+  
   (global-set-key (kbd "\e\ei")
                   (lambda () (interactive) (find-file "~/Dropbox/orgfiles/i.org")))
-
+  
   (global-set-key (kbd "\e\el")
                   (lambda () (interactive) (find-file "~/Dropbox/orgfiles/links.org")))
-
+  
   (global-set-key (kbd "\e\ec")
                   (lambda () (interactive) (find-file "~/.emacs.d/myinit.org")))
-
+  
 (global-set-key (kbd "<end>") 'move-end-of-line)
-
+  
 (global-set-key [mouse-3] 'flyspell-correct-word-before-point)
 
 (use-package shell-pop
@@ -857,10 +968,10 @@ directory to make multiple eshell windows easier."
 
 (use-package wgrep
 :ensure t
-)
+) 
 (use-package wgrep-ag
 :ensure t
-)
+) 
 (require 'wgrep-ag)
 
 (use-package ag
@@ -886,15 +997,15 @@ directory to make multiple eshell windows easier."
 :ensure t)
 (use-package org-pdfview
 :ensure t)
-
+  
 (require 'pdf-tools)
 (require 'org-pdfview)
 
 (use-package auto-yasnippet
 :ensure t)
 
-(use-package mu4e-conversation
-:ensure t
+;;(use-package mu4e-conversation
+;;:ensure t
 )
 
 (setq browse-url-browser-function 'browse-url-generic

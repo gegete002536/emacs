@@ -1,0 +1,28 @@
+ll
+ll
+ls
+historycommand not found
+historycommand not found
+historycommand not found
+history
+dDD
+dDD
+dDD
+dDD
+ll
+alias ll 'ls -l'
+ll
+l
+l
+ll
+ll
+exit
+ll
+echo $SHELL
+ll
+./HelloWorld 
+./HelloWorld 
+l
+ll
+./HelloWorld 
+echo $SHELL
