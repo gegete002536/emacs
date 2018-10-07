@@ -15,7 +15,14 @@
 	(package-refresh-contents)
 	(package-install 'use-package))
 
-
+;; Setting English Font
+(set-face-attribute
+'default nil :font "Courier New-10")
+;; Chinese Font
+(dolist (charset '(kana han symbol cjk-misc bopomofo))
+(set-fontset-font (frame-parameter nil 'font)
+charset
+(font-spec :family "Microsoft Yahei" :size 12)))
 
 (org-babel-load-file (expand-file-name "~/.emacs.d/myinit.org"))
 (custom-set-variables

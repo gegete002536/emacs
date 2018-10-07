@@ -395,9 +395,13 @@
   :config
   (global-hungry-delete-mode))
   
-
+  
   (use-package multiple-cursors
-  :ensure t)
+:ensure t)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 
   ; expand the marked region in semantic increments (negative prefix to reduce region)
   (use-package expand-region
@@ -1379,7 +1383,7 @@ Eshell prompt
 #+BEGIN_SRC emacs-lisp
 ;;(use-package mu4e-conversation
 ;;:ensure t
-)
+;;)
 
 #+END_SRC
 * Misc
